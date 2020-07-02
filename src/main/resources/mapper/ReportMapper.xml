@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.edu.hbuas.examsys.mybatis.mapper.ReportMapper" >
+
+
+
+    <select id="getDoorPostInfo" resultType="cn.edu.hbuas.examsys.mybatis.pojo.DoorPost">
+
+        select ex.description title,ex.cid cid,ex.college cname,ex.grade grade,ex.clazz clazz,
+        ex.name name,REPLACE(surface.teacher,"-","  ") teacher,
+        CONCAT_WS("-",CONCAT_WS("  ",surface.testtime,surface.begin),surface.end) time,
+        surface.place place,surface.rid rid from (select e.*,college.college
+        from (select examcourse.eid,examcourse.tid,examcourse.cid,examcourse.pid,examcourse. grade,
+        examcourse.clazz,examcourse.name,examcourse.number,
+        examcourse.reset_number,taskplan.description
+        from (select *from examcourse where tid=#{tid}
+        <if test="cid!=null"> and cid=#{cid}</if>
+        <if test="grade!=null"> and grade=#{grade}</if>
+        <if test="clazz!=null"> and clazz=#{clazz}</if>
+        <if test="name!=null"> and  name=#{name}</if>
+        )examcourse
+        LEFT JOIN taskplan on examcourse.tid=taskplan.tid)e LEFT JOIN
+        (select *from college)college on e.cid=college.cid)ex inner JOIN
+        (select surface.*,room.place from surface LEFT JOIN room on surface.tid=room.tid
+        and surface.rid=room.rid)surface on
+        ex.tid=surface.tid and ex.eid=surface.eid
+    </select>
+
+
+    <select id="createRoomArrangement" resultType="cn.edu.hbuas.examsys.mybatis.pojo.RoomArrangement">
+
+       select su.rid rid,su.place place,su.number number,REPLACE(su.teacher,"-","  ")  teacher,taskplan.description title,CONCAT_WS("-",CONCAT_WS("  ",su.testtime,su.begin),su.end) time
+ from
+        (select s.tid, s.suid,s.teacher,s.rid,s.testtime,s.begin,s.end,s.place,det.number from
+					(select surface.*,room.place  from
+					(select *from surface where testtime=#{time1}  and begin=#{begin}  ORDER BY rid ASC)surface LEFT JOIN room on
+					surface.tid=room.tid and
+					surface.rid=room.rid)s
+					LEFT JOIN
+					(select count(*) number,suid from details GROUP BY suid)det
+					on s.suid=det.suid
+			  )su LEFT JOIN taskplan on su.tid=taskplan.tid
+    </select>
+
+    <select id="createRoomArrangements" resultType="cn.edu.hbuas.examsys.mybatis.pojo.RoomArrangement">
+			  select su.rid rid,su.place place,su.number number,REPLACE(su.teacher,"-","  ")  teacher,taskplan.description title,CONCAT_WS("-",CONCAT_WS("  ",su.testtime,su.begin),su.end) time,su.name name,su.college college
+ from
+        (select s.tid, s.suid,s.name,s.college,s.teacher,s.rid,s.testtime,s.begin,s.end,s.place,det.number from
+					(select surface.*,room.place  from
+					(select *from (select surface.*,examcourse.college,examcourse.`name` from surface INNER JOIN
+					(select examcourse.*,college.college from examcourse INNER JOIN college  on examcourse.cid=college.cid)examcourse
+					on surface.tid=examcourse.tid
+					and surface.eid=examcourse.eid)surface where testtime=#{time1}  and begin=#{begin} and tid=#{tid}
+					 ORDER BY rid ASC)surface LEFT JOIN room on
+					surface.tid=room.tid and
+					surface.rid=room.rid)s
+					LEFT JOIN
+					(select count(*) number,suid from details GROUP BY suid)det
+					on s.suid=det.suid
+			  )su LEFT JOIN taskplan on su.tid=taskplan.tid
+
+    </select>
+
+    <select id="getDataTime" resultType="java.lang.String">
+         select testtime from surface GROUP BY testtime ORDER BY testtime
+    </select>
+
+
+    <select id="getTime"  resultType="java.lang.String">
+     select begin from surface GROUP BY begin ORDER BY begin
+    </select>
+
+
+    <select id="getStudentStatementInfo" resultType="cn.edu.hbuas.examsys.mybatis.pojo.StudentStatement">
+        select s.suid suid,s.rid rid,room.place place,s.name name,CONCAT_WS("-",CONCAT_WS("  ",s.testtime,s.begin),s.end)
+        time,REPLACE(s.teacher,"-","  ") teacher from (select surface.*,examcourse.name from (select *from surface where tid=#{tid})surface inner JOIN
+        <if test="cid!=null">(select *from examcourse where tid=#{tid} and cid=#{cid})</if>examcourse  on surface.eid=examcourse.eid and
+        surface.tid=examcourse.tid )s LEFT JOIN room on s.tid=room.tid and s.rid=room.rid ORDER BY s.suid asc
+    </select>
+
+    <select id="getStudentAdmissionCard" resultType="cn.edu.hbuas.examsys.mybatis.pojo.AdmissionCard">
+      select details.sid sid,details.sname name,details.seat seat,student.photo photo from details LEFT JOIN (select *from student where tid=#{tid})student on details.sid=student.sid where  details.tid=#{tid} and details.suid=#{suid}
+    </select>
+
+
+    <select id="getAdmissionCard" resultType="cn.edu.hbuas.examsys.mybatis.pojo.AdmissionCard">
+        select distinct(details.sid) sid ,details.sname name,details.sex sex,student.clazz clazz,student.photo photo,student.college college from
+        (select *from details where tid=#{tid})details inner JOIN
+        (select student1.*,college.college from (select *from student where tid=#{tid} <if test="cid!=null">and cid=#{cid}</if> )student1 LEFT JOIN college on student1.cid=college.cid)student on details.sid=
+        student.sid
+    </select>
+
+
+    <select id="getDetailsBySidAndTid" resultType="cn.edu.hbuas.examsys.mybatis.pojo.Details">
+        select details.name pname,CONCAT_WS("-",CONCAT_WS("  ",details.examtime,details.begin),details.end) time,
+        details.place place,details.seat seat from (select *from details where tid=#{tid} and sid=#{sid})details LEFT JOIN (select *from room where tid =#{tid})room
+        on details.tid=room.tid and details.rid=room.rid ORDER BY details.examtime, details.begin ASC
+    </select>
+
+    <select id="getDetails" resultType="cn.edu.hbuas.examsys.mybatis.pojo.Details">
+        select details.name name,CONCAT_WS("-",CONCAT_WS("  ",details.examtime,details.begin),details.end) time,
+        details.place place,details.seat seat from (select *from details where tid=#{tid})details LEFT JOIN room
+        on details.tid=room.tid and details.rid=room.rid
+    </select>
+
+
+
+    <select id="getContrast"  resultType="cn.edu.hbuas.examsys.mybatis.pojo.Contrast">
+select examcourse.college cname,examcourse.grade grade,examcourse.name ename,s.rid rid,s.suid suid,
+        CONCAT_WS("-",CONCAT_WS("  ",s.testtime,s.begin),s.end) time,s.place place  from
+        (select surface.*,room.place from (select *from surface where tid=#{tid})surface LEFT JOIN
+        (select place,rid from room where tid=#{tid})room on surface.rid=room.rid)s
+         INNER JOIN (select examcourse.*,college.college from (select *from examcourse where tid=#{tid} )examcourse LEFT JOIN college on
+         examcourse.cid=college.cid)examcourse on s.tid=examcourse.tid and s.eid=examcourse.eid
+
+    </select>
+
+
+    <select id="getDetailsforContrast" resultType="cn.edu.hbuas.examsys.mybatis.pojo.Details">
+        	select sid,sname,seat from details where suid=#{suid};
+    </select>
+
+
+
+    <select id="getAroundTest" resultType="cn.edu.hbuas.examsys.mybatis.pojo.AroundTest">
+        select  s.rid rid,s.name name,room.place place,CONCAT_WS("-",CONCAT_WS("  ",s.testtime,s.begin),s.end) time,s.worknumber worknumber,
+        s.teacher teacher,s.college colleage,s.clazz clazz from  (select surface.*,examcourse.name,examcourse.college,examcourse.clazz from surface
+         INNER JOIN (select examcourse.*,college.college from (select *from examcourse where tid=#{tid})examcourse LEFT JOIN college on
+         examcourse.cid=college.cid )examcourse on surface.eid=examcourse.eid and
+         surface.tid=examcourse.tid)s
+        LEFT JOIN room on s.tid=room.tid   and  s.rid=room.rid ORDER BY s.testtime,s.begin,s.rid
+    </select>
+
+
+
+
+    <select id="getInfoForStudent" resultType="cn.edu.hbuas.examsys.mybatis.pojo.AroundTest">
+        select examcourse.clazz,examcourse.name,s.place, CONCAT_WS("-",CONCAT_WS("  ",s.testtime,s.begin),s.end) time,s.teacher from (select surface.*,room.place from surface INNER JOIN room on surface.tid=room.tid where surface.tid=#{tid})s INNER JOIN examcourse on s.tid=examcourse.tid and
+s.eid=examcourse.eid where examcourse.cid=#{cid} ORDER BY s.testtime,s.begin
+    </select>
+</mapper>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.edu.hbuas.examsys.mybatis.mapper.ExamPlanMapper" >
+    <select id="selectGradeList" resultType="java.lang.String">
+        SELECT DISTINCT grade FROM examcourse order by grade desc
+    </select>
+    <!-- 监考老师增加一次监考次数 -->
+    <update id="updateTeacherOneTimes">
+        update teacher SET times = times + 1 where number = #{number}
+    </update>
+
+    <!-- 老师表，监考老师表联合查询：查询监考老师对应的老师信息 -->
+    <select id="selectInviTeacher" parameterType="cn.edu.hbuas.examsys.mybatis.pojo.Invigilation" resultType="cn.edu.hbuas.examsys.mybatis.pojo.Teacher">
+        SELECT teacher.* FROM teacher,invigilation
+         where teacher.number = invigilation.number
+         <if test="tid != null">
+             AND invigilation.tid = #{tid}
+         </if>
+         <if test="cid != null">
+             AND invigilation.cid = #{cid}
+         </if>
+        ORDER BY times
+    </select>
+
+    <!-- 联合查询，根据考试任务编号和考试科目编号查询考生详细信息，使用随机排序 -->
+    <select id="selectExamineeListByRand" parameterType="cn.edu.hbuas.examsys.mybatis.pojo.Arrange" resultType="cn.edu.hbuas.examsys.model.Examinee">
+        SELECT student.*,profession.pname FROM student,profession,arrange where
+        <if test="tid != null">
+            arrange.tid = #{tid} and student.tid = #{tid}
+        </if>
+        <if test="eid != null">
+            and arrange.eid = #{eid}
+        </if>
+        <if test="reset != null">
+            and arrange.reset = #{reset}
+        </if>
+        AND student.sid = arrange.sid and profession.pid = student.pid
+         ORDER BY RAND()
+    </select>
+
+    <!-- 联合查询，根据考试任务编号和考试科目编号查询考生详细信息,顺序查询 -->
+    <select id="selectExamineeListSequence" parameterType="cn.edu.hbuas.examsys.mybatis.pojo.Arrange" resultType="cn.edu.hbuas.examsys.model.Examinee">
+        SELECT student.*,profession.pname FROM student,profession,arrange where
+        <if test="tid != null">
+            arrange.tid = #{tid} and student.tid = #{tid}
+        </if>
+        <if test="eid != null">
+            and arrange.eid = #{eid}
+        </if>
+        <if test="reset != null">
+            and arrange.reset = #{reset}
+        </if>
+        AND student.sid = arrange.sid and profession.pid = student.pid
+    </select>
+
+    <!-- 根据条件查询学生的详细数据-->
+    <select id="selectArrangeStudent" parameterType="cn.edu.hbuas.examsys.mybatis.pojo.Student" resultType="cn.edu.hbuas.examsys.mybatis.pojo.Student">
+        SELECT * FROM student
+        <where>
+            <if test="sid != null">
+                sid = #{sid}
+            </if>
+            <if test="idcard != null">
+                and idcard = #{idcard}
+            </if>
+            <if test="tid != null">
+                and tid = #{tid}
+            </if>
+            <if test="grade != null">
+                and grade = #{grade}
+            </if>
+
+            <if test="clazz != null">
+                and clazz = #{clazz}
+            </if>
+            <if test="cid != null">
+                and cid = #{cid}
+            </if>
+            <if test="pid != null">
+                and pid = #{pid}
+            </if>
+            <if test="state != null">
+                and state = #{state}
+            </if>
+        </where>
+    </select>
+</mapper>

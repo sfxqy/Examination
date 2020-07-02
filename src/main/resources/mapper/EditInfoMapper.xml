@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.edu.hbuas.examsys.mybatis.mapper.EditInfoMapper">
+    <update id="addTeacherTimeByNumber">
+          UPDATE teacher
+            SET times = times + 1
+            WHERE
+              number = #{number}
+    </update>
+    <update id="addTeacherTime">
+         UPDATE teacher
+        SET times = times + 1
+        WHERE
+            cid = #{cid}
+            AND tname = #{tname}
+    </update>
+    <update id="subTeacherTime">
+        UPDATE teacher
+        SET times = times - 1
+        WHERE
+            cid = #{cid}
+            AND tname = #{tname}
+    </update>
+    <update id="subTeacherTimeByNumber">
+        UPDATE teacher
+        SET times = times - 1
+        WHERE
+          number = #{number}
+    </update>
+    <select id="getSurfaceInfoByCid" resultType="cn.edu.hbuas.examsys.mybatis.pojo.Surface">
+        SELECT
+            s1.*
+        FROM
+            surface s1,
+            examcourse e1
+        WHERE
+            e1.cid = #{cid}
+            AND e1.tid = #{tid}
+            AND s1.eid = e1.eid
+    </select>
+    <select id="getTeacherNameByWorkNumber" resultType="java.lang.String">
+        SELECT
+            tname
+        FROM
+            teacher
+        WHERE
+            number = #{workNumber}
+    </select>
+    <select id="getAllWorkNumberByTime" resultType="java.lang.String">
+        SELECT DISTINCT
+            ( s1.worknumber )
+        FROM
+            surface s1,
+            surface s2
+        WHERE
+            s1.testtime = s2.testtime
+            AND s1.`begin` = s2.`begin`
+            AND s1.testtime = #{testtime}
+            AND s1.`begin` = #{begin}
+    </select>
+    <select id="getAllWorkNumber" resultType="java.lang.String">
+        SELECT number
+        FROM teacher
+    </select>
+</mapper>
